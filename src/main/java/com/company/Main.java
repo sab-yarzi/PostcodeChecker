@@ -1,13 +1,9 @@
 package com.company;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import com.google.gson.*;
 
 import java.io.*;
 import java.net.*;
-import java.nio.BufferOverflowException;
 import java.util.HashMap;
 
 public class Main {
@@ -30,6 +26,9 @@ public class Main {
     }
 
     public static boolean postcodeValidation(String postcode) throws Exception {
+        if (postcode.length() > 7 || postcode.length() < 5){
+            throw new Exception("Postcode is not valid");
+        }
         URL postcodeURl = new URL("http://postcodes.io/postcodes/" + postcode + "/validate");
         return getJsonObject(postcodeURl).get("result").getAsString().equals("true");
 
@@ -43,7 +42,6 @@ public class Main {
 
     public static HashMap nearestPostcodes(String postcode) throws Exception{
         URL postcodeURL = new URL("http://postcodes.io/postcodes/" + postcode + "/nearest" );
-        JsonObject returnedObject = getJsonObject(postcodeURL);
         JsonArray returnedArray = getJsonObject(postcodeURL).getAsJsonArray("result");
         HashMap<String,String> postcodesHash = new HashMap<>();
         for (int i = 1; i < returnedArray.size() ; i++) {
@@ -55,9 +53,12 @@ public class Main {
     public static JsonObject getJsonObject(URL request) throws Exception {
         HttpURLConnection requestConnect = (HttpURLConnection) request.openConnection();
         requestConnect.connect();
-        JsonObject root = JsonParser.parseReader(new InputStreamReader((InputStream) requestConnect.getContent())).getAsJsonObject();
-        requestConnect.disconnect();
-        return root;
+        try {
+            return JsonParser.parseReader(new InputStreamReader((InputStream) requestConnect.getContent())).getAsJsonObject();
+        } catch (JsonIOException | IOException | JsonSyntaxException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
 }
